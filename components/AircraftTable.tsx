@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 
 import type { Aircraft } from '@/types/aircraft';
+import { getAircraftId, getAircraftVisualState } from '@/lib/aircraftDisplay';
 
 type SortDirection = 'asc' | 'desc';
 type SortField = 'flight' | 'r' | 't' | 'altitude' | 'gs' | 'track' | 'dst' | 'dir' | 'baro_rate' | 'squawk';
@@ -27,6 +28,9 @@ type SortState = {
 type Props = {
   aircraft: Aircraft[];
   radiusNm: number;
+  loading: boolean;
+  selectedAircraftId: string | null;
+  onSelectAircraft: (aircraftId: string | null) => void;
 };
 
 function getAltitudeValue(aircraft: Aircraft) {
@@ -60,7 +64,7 @@ function getComparableValue(aircraft: Aircraft, key: SortField) {
   }
 }
 
-export function AircraftTable({ aircraft, radiusNm }: Props) {
+export function AircraftTable({ aircraft, radiusNm, loading, selectedAircraftId, onSelectAircraft }: Props) {
   const [sortState, setSortState] = useState<SortState>({ key: 'dst', direction: 'asc' });
 
   const sortedAircraft = useMemo(() => {
@@ -140,13 +144,38 @@ export function AircraftTable({ aircraft, radiusNm }: Props) {
             {sortedAircraft.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={10} sx={{ color: '#94a3b8', textAlign: 'center', py: 4, borderColor: '#1f2937' }}>
-                  No aircraft in range.
+                  {loading ? '↻ Acquiring aircraft data...' : 'No aircraft are currently in range.'}
                 </TableCell>
               </TableRow>
             ) : (
-              sortedAircraft.map((aircraft) => (
-                <TableRow key={aircraft.hex ?? `${aircraft.flight ?? 'unknown'}-${Math.random()}`} hover sx={{ '&:hover': { backgroundColor: '#0b1322' } }}>
-                  <TableCell sx={{ color: '#f8fafc', borderColor: '#1f2937' }}>{aircraft.flight || '—'}</TableCell>
+              sortedAircraft.map((aircraft) => {
+                const aircraftId = getAircraftId(aircraft);
+                const selected = aircraftId === selectedAircraftId;
+                const visualState = getAircraftVisualState(aircraft, selected);
+
+                return (
+                <TableRow
+                  key={aircraftId}
+                  hover
+                  tabIndex={0}
+                  aria-selected={selected}
+                  onClick={() => onSelectAircraft(selected ? null : aircraftId)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      onSelectAircraft(selected ? null : aircraftId);
+                    }
+                  }}
+                  sx={{
+                    cursor: 'pointer',
+                    backgroundColor: selected ? 'rgba(255, 0, 255, 0.1)' : 'transparent',
+                    '&:hover': { backgroundColor: selected ? 'rgba(255, 0, 255, 0.16)' : '#0b1322' },
+                    '&:focus-visible': { outline: '2px solid #00ffff', outlineOffset: '-2px' },
+                  }}
+                >
+                  <TableCell sx={{ color: visualState === 'stale' ? '#ffb300' : '#f8fafc', borderColor: '#1f2937', borderLeft: visualState === 'selected' ? '3px solid #ff00ff' : visualState === 'stale' ? '3px dashed #ffb300' : '3px solid transparent' }}>
+                    {visualState === 'stale' ? '⚠ ' : visualState === 'selected' ? '◆ ' : ''}{aircraft.flight || '—'}
+                  </TableCell>
                   <TableCell sx={{ color: '#f8fafc', borderColor: '#1f2937' }}>{aircraft.r || '—'}</TableCell>
                   <TableCell sx={{ color: '#f8fafc', borderColor: '#1f2937' }}>{aircraft.t || '—'}</TableCell>
                   <TableCell sx={{ color: '#f8fafc', borderColor: '#1f2937' }}>{getAltitudeValue(aircraft) ? getAltitudeValue(aircraft).toLocaleString() : '—'}</TableCell>
@@ -157,7 +186,8 @@ export function AircraftTable({ aircraft, radiusNm }: Props) {
                   <TableCell sx={{ color: '#f8fafc', borderColor: '#1f2937' }}>{aircraft.baro_rate !== undefined ? aircraft.baro_rate.toLocaleString() : '—'}</TableCell>
                   <TableCell sx={{ color: '#f8fafc', borderColor: '#1f2937' }}>{aircraft.squawk || '—'}</TableCell>
                 </TableRow>
-              ))
+                );
+              })
             )}
           </TableBody>
         </Table>

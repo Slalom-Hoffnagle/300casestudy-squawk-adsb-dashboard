@@ -72,7 +72,7 @@ export function ZipPrompt({ open, onSubmit, onClose }: Props) {
           </Button>
         ) : null}
         <Button variant="contained" onClick={handleSubmit} disabled={busy} sx={{ background: '#00d4d4', color: '#020817', fontWeight: 700 }}>
-          {busy ? 'Resolving...' : 'Use ZIP'}
+          {busy ? 'Resolving...' : 'Use ZIP code'}
         </Button>
       </DialogActions>
     </Dialog>

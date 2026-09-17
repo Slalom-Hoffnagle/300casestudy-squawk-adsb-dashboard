@@ -31,6 +31,7 @@ export function LocationGate() {
   const [lastPoll, setLastPoll] = useState<string | null>(null);
   const [cacheAgeSec, setCacheAgeSec] = useState<number | null>(null);
   const [locationMessage, setLocationMessage] = useState('Resolving your location...');
+  const [selectedAircraftId, setSelectedAircraftId] = useState<string | null>(null);
 
   const fetchAircraft = useCallback(async (nextCoordinates: Coordinates) => {
     setStatus('loading');
@@ -111,6 +112,12 @@ export function LocationGate() {
     return () => window.clearInterval(intervalId);
   }, [coordinates, fetchAircraft]);
 
+  useEffect(() => {
+    if (selectedAircraftId && !aircraft.some((item) => (item.hex ?? `${item.flight ?? 'unknown'}-${item.lat ?? 'x'}-${item.lon ?? 'x'}`) === selectedAircraftId)) {
+      setSelectedAircraftId(null);
+    }
+  }, [aircraft, selectedAircraftId]);
+
   const handleZipSubmit = async (zipCode: string) => {
     const matched = await geocodeZip(zipCode);
     setCoordinates({ lat: matched.lat, lon: matched.lon });
@@ -150,7 +157,7 @@ export function LocationGate() {
       </Box>
 
       <Box sx={{ px: 2, py: 1.5, borderBottom: '1px solid #1f2937', background: '#050816' }}>
-        <Typography variant="caption" sx={{ color: '#cbd5e1', letterSpacing: 1.2, textTransform: 'uppercase' }}>
+        <Typography variant="caption" sx={{ color: '#cbd5e1' }}>
           {locationMessage}
         </Typography>
       </Box>
@@ -163,10 +170,22 @@ export function LocationGate() {
 
       <Box sx={{ display: 'flex', flex: 1, minHeight: 0, borderTop: '1px solid #1f2937' }}>
         <Box sx={{ flex: 2, minWidth: 0, position: 'relative', zIndex: 0, borderRight: '1px solid #1f2937' }}>
-          <AircraftMap aircraft={aircraft} userLocation={coordinates} radiusNm={DEFAULT_RADIUS_NM} />
+          <AircraftMap
+            aircraft={aircraft}
+            userLocation={coordinates}
+            radiusNm={DEFAULT_RADIUS_NM}
+            selectedAircraftId={selectedAircraftId}
+            onSelectAircraft={setSelectedAircraftId}
+          />
         </Box>
         <Box sx={{ flex: 1, minWidth: 320, display: 'flex', flexDirection: 'column', minHeight: 0, position: 'relative', zIndex: 1, background: '#020617' }}>
-          <AircraftTable aircraft={aircraft} radiusNm={DEFAULT_RADIUS_NM} />
+          <AircraftTable
+            aircraft={aircraft}
+            radiusNm={DEFAULT_RADIUS_NM}
+            loading={status === 'loading'}
+            selectedAircraftId={selectedAircraftId}
+            onSelectAircraft={setSelectedAircraftId}
+          />
         </Box>
       </Box>
 
