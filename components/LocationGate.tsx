@@ -12,7 +12,7 @@ import type { Aircraft, PollStatus } from '@/types/aircraft';
 
 const AircraftMap = dynamic(() => import('@/components/AircraftMap').then((mod) => mod.AircraftMap), {
   ssr: false,
-  loading: () => <Box sx={{ height: 520, display: 'grid', placeItems: 'center', background: '#020817' }}>Loading map…</Box>,
+  loading: () => <Box sx={{ height: '100%', display: 'grid', placeItems: 'center', background: '#020817' }}>Loading map…</Box>,
 });
 
 const DEFAULT_RADIUS_NM = Number(process.env.NEXT_PUBLIC_RADIUS_NM ?? 50);
@@ -29,7 +29,6 @@ export function LocationGate() {
   const [status, setStatus] = useState<PollStatus>('idle');
   const [aircraft, setAircraft] = useState<Aircraft[]>([]);
   const [lastPoll, setLastPoll] = useState<string | null>(null);
-  const [cacheAgeSec, setCacheAgeSec] = useState<number | null>(null);
   const [locationMessage, setLocationMessage] = useState('Resolving your location...');
   const [selectedAircraftId, setSelectedAircraftId] = useState<string | null>(null);
 
@@ -45,7 +44,6 @@ export function LocationGate() {
         aircraft?: Aircraft[];
         error?: string;
         timestamp?: string;
-        cache_age_sec?: number | null;
       };
 
       if (!response.ok || payload.status === 'error') {
@@ -58,7 +56,6 @@ export function LocationGate() {
       setAircraft(Array.isArray(payload.aircraft) ? payload.aircraft : []);
       setStatus('ok');
       setLastPoll(payload.timestamp ?? new Date().toISOString());
-      setCacheAgeSec(payload.cache_age_sec ?? null);
       setLocationMessage(`Tracking ${payload.aircraft?.length ?? 0} aircraft within ${DEFAULT_RADIUS_NM} NM.`);
     } catch (error) {
       setStatus('error');
@@ -141,7 +138,7 @@ export function LocationGate() {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', background: '#020817', color: '#f8fafc', display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ height: '100dvh', overflow: 'hidden', background: '#020817', color: '#f8fafc', display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ borderBottom: '1px solid #1f2937', px: 2, py: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
         <Typography variant="h6" sx={{ letterSpacing: 1.5, textTransform: 'uppercase', fontWeight: 700 }}>
           ADS-B Overhead Dashboard
@@ -156,11 +153,7 @@ export function LocationGate() {
         </Button>
       </Box>
 
-      <Box sx={{ px: 2, py: 1.5, borderBottom: '1px solid #1f2937', background: '#050816' }}>
-        <Typography variant="caption" sx={{ color: '#cbd5e1' }}>
-          {locationMessage}
-        </Typography>
-      </Box>
+      <StatusBar status={status} lastPoll={lastPoll} locationMessage={locationMessage} />
 
       {status === 'error' || status === 'rate_limited' ? (
         <Alert severity={status === 'rate_limited' ? 'warning' : 'error'} sx={{ m: 2 }}>
@@ -168,8 +161,8 @@ export function LocationGate() {
         </Alert>
       ) : null}
 
-      <Box sx={{ display: 'flex', flex: 1, minHeight: 0, borderTop: '1px solid #1f2937' }}>
-        <Box sx={{ flex: 2, minWidth: 0, position: 'relative', zIndex: 0, borderRight: '1px solid #1f2937' }}>
+      <Box sx={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden', borderTop: '1px solid #1f2937' }}>
+        <Box sx={{ flex: 2, minWidth: 0, minHeight: 0, position: 'relative', zIndex: 0, borderRight: '1px solid #1f2937' }}>
           <AircraftMap
             aircraft={aircraft}
             userLocation={coordinates}
@@ -189,7 +182,6 @@ export function LocationGate() {
         </Box>
       </Box>
 
-      <StatusBar status={status} lastPoll={lastPoll} aircraftCount={aircraft.length} cacheAgeSec={cacheAgeSec} />
       <ZipPrompt open={showZipPrompt} onSubmit={handleZipSubmit} onClose={() => setShowZipPrompt(false)} />
     </Box>
   );

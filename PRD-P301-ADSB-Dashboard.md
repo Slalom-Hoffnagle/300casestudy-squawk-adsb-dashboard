@@ -151,7 +151,9 @@ The resolved lat/lon is held in React state for the session. It is not persisted
   - Ground / < 1,000 ft: gray
   - 1,000–10,000 ft: yellow
   - 10,000–25,000 ft: green
-  - > 25,000 ft: blue
+  - 25,000–30,000 ft: cyan
+  - 30,000–35,000 ft: blue
+  - ≥ 35,000 ft: violet
 - **Hovering** over an aircraft icon opens a detail popup showing: callsign, registration, type, altitude, speed, heading, distance, squawk
 - **Clicking** an aircraft icon selects it and draws its flight track as a dashed line connecting its previously recorded positions (accumulated across poll cycles during the session)
   - Only one track is shown at a time
@@ -236,7 +238,9 @@ Color is never decorative. It is a triage tool. The dashboard uses the aviation-
 | Ground / < 1,000 ft | Gray (`#555555`) |
 | 1,000–10,000 ft | Amber (`#FFB300`) |
 | 10,000–25,000 ft | Green (`#39FF14`) |
-| > 25,000 ft | Cyan (`#00FFFF`) |
+| 25,000–29,999 ft | Cyan (`#00FFFF`) |
+| 30,000–34,999 ft | Blue (`#00A6FF`) |
+| 35,000+ ft | Violet (`#8B5CF6`) |
 
 ---
 

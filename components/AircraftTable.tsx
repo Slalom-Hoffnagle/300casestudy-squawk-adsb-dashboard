@@ -34,6 +34,7 @@ type Props = {
 };
 
 function getAltitudeValue(aircraft: Aircraft) {
+  if (aircraft.alt_baro === 'ground') return 0;
   return aircraft.alt_baro ?? aircraft.alt_geom ?? 0;
 }
 
@@ -99,7 +100,7 @@ export function AircraftTable({ aircraft, radiusNm, loading, selectedAircraftId,
         </Typography>
       </Box>
 
-      <TableContainer component={Paper} sx={{ background: '#020817', boxShadow: 'none', borderRadius: 0, overflow: 'auto' }}>
+      <TableContainer component={Paper} sx={{ flex: 1, minHeight: 0, background: '#020817', boxShadow: 'none', borderRadius: 0, overflow: 'auto' }}>
         <Table stickyHeader size="small" sx={{ minWidth: 900, borderCollapse: 'collapse' }}>
           <TableHead>
             <TableRow>

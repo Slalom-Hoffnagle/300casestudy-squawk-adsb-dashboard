@@ -5,7 +5,7 @@ export type Aircraft = {
   t?: string;
   lat?: number;
   lon?: number;
-  alt_baro?: number;
+  alt_baro?: number | 'ground';
   alt_geom?: number;
   gs?: number;
   track?: number;

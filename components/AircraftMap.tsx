@@ -8,6 +8,14 @@ import { getAircraftId, getAircraftStateColor, getAircraftVisualState } from '@/
 import type { Aircraft } from '@/types/aircraft';
 
 const DEFAULT_MAP_CENTER: [number, number] = [39.7588, -104.919];
+const ALTITUDE_LEGEND = [
+  { color: '#777777', label: 'Ground / unknown' },
+  { color: '#ffb300', label: '1,000–9,999 ft' },
+  { color: '#39ff14', label: '10,000–24,999 ft' },
+  { color: '#00ffff', label: '25,000–29,999 ft' },
+  { color: '#00a6ff', label: '30,000–34,999 ft' },
+  { color: '#8b5cf6', label: '35,000+ ft' },
+];
 
 function getMarkerIcon(color: string, heading: number, state: ReturnType<typeof getAircraftVisualState>) {
   const stateIndicator = state === 'stale'
@@ -31,18 +39,52 @@ function getMarkerIcon(color: string, heading: number, state: ReturnType<typeof 
   });
 }
 
+function getHomeLocationIcon() {
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="6.5" fill="none" stroke="#00ffff" stroke-width="1.5" />
+      <path d="M12 1.5 V6 M12 18 V22.5 M1.5 12 H6 M18 12 H22.5" fill="none" stroke="#00ffff" stroke-width="1.5" />
+      <circle cx="12" cy="12" r="2" fill="#00ffff" />
+    </svg>
+  `;
+
+  return L.divIcon({
+    className: 'home-location-marker',
+    html: svg,
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
+    popupAnchor: [0, -12],
+  });
+}
+
 function MapSelection({ onClearSelection }: { onClearSelection: () => void }) {
   useMapEvents({ click: onClearSelection });
   return null;
 }
 
-function MapViewport({ center, zoom }: { center: [number, number]; zoom: number }) {
+function MapControls({ center }: { center: [number, number] }) {
+  const map = useMap();
+
+  return (
+    <div className="map-controls leaflet-bar" onClick={(event) => event.stopPropagation()}>
+      <button type="button" title="Zoom in" aria-label="Zoom in" onClick={() => map.zoomIn()}>+</button>
+      <button type="button" title="Zoom out" aria-label="Zoom out" onClick={() => map.zoomOut()}>−</button>
+      <button type="button" title="Recenter map" aria-label="Recenter map on your location" onClick={() => map.setView(center, map.getZoom())}>⌖</button>
+    </div>
+  );
+}
+
+function MapViewport({ center, radiusNm }: { center: [number, number]; radiusNm: number }) {
   const map = useMap();
 
   useEffect(() => {
-    map.setView(center, zoom);
     const invalidateSize = () => map.invalidateSize({ pan: false });
-    const frame = requestAnimationFrame(invalidateSize);
+    const fitRadius = () => {
+      invalidateSize();
+      const radiusBounds = L.latLng(center).toBounds(radiusNm * 1852 * 2);
+      map.fitBounds(radiusBounds, { padding: [32, 32], animate: false });
+    };
+    const frame = requestAnimationFrame(fitRadius);
     const resizeObserver = new ResizeObserver(invalidateSize);
     resizeObserver.observe(map.getContainer());
 
@@ -50,7 +92,7 @@ function MapViewport({ center, zoom }: { center: [number, number]; zoom: number 
       cancelAnimationFrame(frame);
       resizeObserver.disconnect();
     };
-  }, [center, zoom, map]);
+  }, [center, radiusNm, map]);
 
   return null;
 }
@@ -75,13 +117,12 @@ export function AircraftMap({
     return DEFAULT_MAP_CENTER;
   }, [userLocation]);
 
-  const mapHeight = 520;
-
   return (
-    <div style={{ height: mapHeight, width: '100%', background: '#020817', position: 'relative', zIndex: 0, overflow: 'hidden' }}>
-      <MapContainer center={center} zoom={8} style={{ height: '100%', width: '100%' }} scrollWheelZoom>
-        <MapViewport center={center} zoom={8} />
+    <div style={{ height: '100%', minHeight: 0, width: '100%', background: '#020817', position: 'relative', zIndex: 0, overflow: 'hidden' }}>
+      <MapContainer center={center} zoom={8} zoomControl={false} style={{ height: '100%', width: '100%' }} scrollWheelZoom>
+        <MapViewport center={center} radiusNm={radiusNm} />
         <MapSelection onClearSelection={() => onSelectAircraft(null)} />
+        <MapControls center={center} />
         <TileLayer
           attribution='&copy; <a href="https://carto.com/attributions">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png?key=cb1_3o52_1_33333ae77fb1d0f08863d0d7"
@@ -90,7 +131,7 @@ export function AircraftMap({
         {userLocation ? (
           <>
             <Circle center={[userLocation.lat, userLocation.lon]} radius={radiusNm * 1852} pathOptions={{ color: '#00d4d4', dashArray: '6 6', fill: false, opacity: 0.65 }} />
-            <Marker position={[userLocation.lat, userLocation.lon]} icon={getMarkerIcon('#00d4d4', 0, 'selected')} title="Home location" alt="Home location">
+            <Marker position={[userLocation.lat, userLocation.lon]} icon={getHomeLocationIcon()} title="Home location" alt="Home location">
               <Popup className="adsb-popup">Home location</Popup>
             </Marker>
           </>
@@ -142,6 +183,42 @@ export function AircraftMap({
           );
         })}
       </MapContainer>
+      <div
+        role="note"
+        aria-label="Aircraft altitude color key"
+        style={{
+          position: 'absolute',
+          top: 12,
+          right: 12,
+          zIndex: 700,
+          padding: '8px 10px',
+          border: '1px solid #333333',
+          background: 'rgba(5, 8, 22, 0.92)',
+          color: '#e0e0e0',
+          fontFamily: 'var(--font-b612-mono), monospace',
+          fontSize: 11,
+          lineHeight: 1.4,
+          pointerEvents: 'none',
+        }}
+      >
+        <div style={{ marginBottom: 5, color: '#00d4d4', fontWeight: 700, letterSpacing: 1 }}>ALTITUDE</div>
+        {ALTITUDE_LEGEND.map((item) => (
+          <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 7, whiteSpace: 'nowrap' }}>
+            <span
+              aria-hidden="true"
+              style={{
+                width: 0,
+                height: 0,
+                borderLeft: '5px solid transparent',
+                borderRight: '5px solid transparent',
+                borderBottom: `10px solid ${item.color}`,
+                flexShrink: 0,
+              }}
+            />
+            <span>{item.label}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
