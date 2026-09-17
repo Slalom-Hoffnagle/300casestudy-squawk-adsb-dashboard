@@ -18,4 +18,10 @@ export type Aircraft = {
   dir?: number;
 };
 
+export type AircraftTrackPoint = {
+  lat: number;
+  lon: number;
+  altitude: number | 'ground' | null;
+};
+
 export type PollStatus = 'idle' | 'loading' | 'ok' | 'error' | 'rate_limited';

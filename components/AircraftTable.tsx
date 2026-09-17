@@ -106,10 +106,10 @@ export function AircraftTable({ aircraft, radiusNm, loading, selectedAircraftId,
             <TableRow>
               {[
                 { key: 'flight', label: 'Callsign' },
-                { key: 'r', label: 'Registration' },
                 { key: 't', label: 'Type' },
-                { key: 'altitude', label: 'Altitude (ft)' },
                 { key: 'gs', label: 'Speed (kts)' },
+                { key: 'altitude', label: 'Altitude (ft)' },
+                { key: 'r', label: 'Registration' },
                 { key: 'track', label: 'Heading (°)' },
                 { key: 'dst', label: 'Distance (NM)' },
                 { key: 'dir', label: 'Bearing (°)' },
@@ -132,7 +132,13 @@ export function AircraftTable({ aircraft, radiusNm, loading, selectedAircraftId,
                     active={sortState.key === column.key}
                     direction={sortState.key === column.key ? sortState.direction : 'asc'}
                     onClick={() => handleSort(column.key as SortField)}
-                    sx={{ color: '#e2e8f0', '& .MuiTableSortLabel-icon': { color: '#00d4d4 !important' } }}
+                    sx={{
+                      color: '#e2e8f0',
+                      '&:hover': { color: '#ffffff' },
+                      '&.Mui-active': { color: '#00ffff' },
+                      '&.Mui-active:hover': { color: '#00ffff' },
+                      '& .MuiTableSortLabel-icon': { color: '#00d4d4 !important' },
+                    }}
                   >
                     {column.label}
                   </TableSortLabel>
@@ -177,10 +183,10 @@ export function AircraftTable({ aircraft, radiusNm, loading, selectedAircraftId,
                   <TableCell sx={{ color: visualState === 'stale' ? '#ffb300' : '#f8fafc', borderColor: '#1f2937', borderLeft: visualState === 'selected' ? '3px solid #ff00ff' : visualState === 'stale' ? '3px dashed #ffb300' : '3px solid transparent' }}>
                     {visualState === 'stale' ? '⚠ ' : visualState === 'selected' ? '◆ ' : ''}{aircraft.flight || '—'}
                   </TableCell>
-                  <TableCell sx={{ color: '#f8fafc', borderColor: '#1f2937' }}>{aircraft.r || '—'}</TableCell>
                   <TableCell sx={{ color: '#f8fafc', borderColor: '#1f2937' }}>{aircraft.t || '—'}</TableCell>
-                  <TableCell sx={{ color: '#f8fafc', borderColor: '#1f2937' }}>{getAltitudeValue(aircraft) ? getAltitudeValue(aircraft).toLocaleString() : '—'}</TableCell>
                   <TableCell sx={{ color: '#f8fafc', borderColor: '#1f2937' }}>{aircraft.gs !== undefined ? aircraft.gs.toFixed(0) : '—'}</TableCell>
+                  <TableCell sx={{ color: '#f8fafc', borderColor: '#1f2937' }}>{getAltitudeValue(aircraft) ? getAltitudeValue(aircraft).toLocaleString() : '—'}</TableCell>
+                  <TableCell sx={{ color: '#f8fafc', borderColor: '#1f2937' }}>{aircraft.r || '—'}</TableCell>
                   <TableCell sx={{ color: '#f8fafc', borderColor: '#1f2937' }}>{aircraft.track !== undefined ? aircraft.track.toFixed(0) : '—'}</TableCell>
                   <TableCell sx={{ color: '#f8fafc', borderColor: '#1f2937' }}>{aircraft.dst !== undefined ? aircraft.dst.toFixed(1) : '—'}</TableCell>
                   <TableCell sx={{ color: '#f8fafc', borderColor: '#1f2937' }}>{aircraft.dir !== undefined ? aircraft.dir.toFixed(0) : '—'}</TableCell>

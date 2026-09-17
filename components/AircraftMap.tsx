@@ -1,21 +1,34 @@
 'use client';
 
 import { useEffect, useMemo } from 'react';
-import { Circle, MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet';
+import { Circle, MapContainer, Marker, Polyline, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 
-import { getAircraftId, getAircraftStateColor, getAircraftVisualState } from '@/lib/aircraftDisplay';
-import type { Aircraft } from '@/types/aircraft';
+import { getAircraftId, getAircraftStateColor, getAircraftVisualState, getAltitudeColor } from '@/lib/aircraftDisplay';
+import type { AltitudeVisualState } from '@/lib/aircraftDisplay';
+import type { Aircraft, AircraftTrackPoint } from '@/types/aircraft';
 
 const DEFAULT_MAP_CENTER: [number, number] = [39.7588, -104.919];
-const ALTITUDE_LEGEND = [
-  { color: '#777777', label: 'Ground / unknown' },
-  { color: '#ffb300', label: '1,000–9,999 ft' },
-  { color: '#39ff14', label: '10,000–24,999 ft' },
-  { color: '#00ffff', label: '25,000–29,999 ft' },
-  { color: '#00a6ff', label: '30,000–34,999 ft' },
-  { color: '#8b5cf6', label: '35,000+ ft' },
+const ALTITUDE_LEGEND: { state: AltitudeVisualState; label: string }[] = [
+  { state: 'ground', label: 'Ground / unknown' },
+  { state: 'altitude-0', label: '0–4,999 ft' },
+  { state: 'altitude-5', label: '5,000–9,999 ft' },
+  { state: 'altitude-10', label: '10,000–14,999 ft' },
+  { state: 'altitude-15', label: '15,000–19,999 ft' },
+  { state: 'altitude-20', label: '20,000–24,999 ft' },
+  { state: 'altitude-25', label: '25,000–29,999 ft' },
+  { state: 'altitude-30', label: '30,000–34,999 ft' },
+  { state: 'altitude-35', label: '35,000–39,999 ft' },
+  { state: 'altitude-40', label: '40,000+ ft' },
 ];
+const TRACK_GRADIENT_STEPS = 6;
+
+function mixColors(start: string, end: string, amount: number) {
+  const startValue = Number.parseInt(start.slice(1), 16);
+  const endValue = Number.parseInt(end.slice(1), 16);
+  const channel = (shift: number) => Math.round(((startValue >> shift) & 255) + (((endValue >> shift) & 255) - ((startValue >> shift) & 255)) * amount);
+  return `#${[16, 8, 0].map((shift) => channel(shift).toString(16).padStart(2, '0')).join('')}`;
+}
 
 function getMarkerIcon(color: string, heading: number, state: ReturnType<typeof getAircraftVisualState>) {
   const stateIndicator = state === 'stale'
@@ -103,12 +116,14 @@ export function AircraftMap({
   userLocation,
   radiusNm,
   selectedAircraftId,
+  selectedTrack,
   onSelectAircraft,
 }: {
   aircraft: Aircraft[];
   userLocation: { lat: number; lon: number } | null;
   radiusNm: number;
   selectedAircraftId: string | null;
+  selectedTrack: AircraftTrackPoint[];
   onSelectAircraft: (aircraftId: string | null) => void;
 }) {
   const center = useMemo(() => {
@@ -117,6 +132,27 @@ export function AircraftMap({
     }
     return DEFAULT_MAP_CENTER;
   }, [userLocation]);
+
+  const trackSegments = useMemo(() => selectedTrack.slice(1).flatMap((point, pointIndex) => {
+    const previous = selectedTrack[pointIndex];
+    const startColor = getAltitudeColor(previous.altitude);
+    const endColor = getAltitudeColor(point.altitude);
+
+    return Array.from({ length: TRACK_GRADIENT_STEPS }, (_, stepIndex) => {
+      const startAmount = stepIndex / TRACK_GRADIENT_STEPS;
+      const endAmount = (stepIndex + 1) / TRACK_GRADIENT_STEPS;
+      const interpolate = (start: number, end: number, amount: number) => start + (end - start) * amount;
+
+      return {
+        key: `${pointIndex}-${stepIndex}`,
+        color: mixColors(startColor, endColor, (startAmount + endAmount) / 2),
+        positions: [
+          [interpolate(previous.lat, point.lat, startAmount), interpolate(previous.lon, point.lon, startAmount)],
+          [interpolate(previous.lat, point.lat, endAmount), interpolate(previous.lon, point.lon, endAmount)],
+        ] as [[number, number], [number, number]],
+      };
+    });
+  }), [selectedTrack]);
 
   return (
     <div style={{ height: '100%', minHeight: 0, width: '100%', background: '#020817', position: 'relative', zIndex: 0, overflow: 'hidden' }}>
@@ -137,6 +173,15 @@ export function AircraftMap({
             </Marker>
           </>
         ) : null}
+
+        {trackSegments.map((segment) => (
+          <Polyline
+            key={segment.key}
+            positions={segment.positions}
+            pathOptions={{ color: segment.color, weight: 3, opacity: 0.9, lineCap: 'round', lineJoin: 'round' }}
+            interactive={false}
+          />
+        ))}
 
         {aircraft.map((item) => {
           if (item.lat == null || item.lon == null) return null;
@@ -212,7 +257,7 @@ export function AircraftMap({
                 height: 0,
                 borderLeft: '5px solid transparent',
                 borderRight: '5px solid transparent',
-                borderBottom: `10px solid ${item.color}`,
+                borderBottom: `10px solid ${getAircraftStateColor(item.state)}`,
                 flexShrink: 0,
               }}
             />

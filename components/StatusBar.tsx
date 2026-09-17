@@ -6,8 +6,6 @@ import type { PollStatus } from '@/types/aircraft';
 
 type Props = {
   status: PollStatus;
-  lastPoll: string | null;
-  locationMessage: string;
 };
 
 const statusStyle: Record<PollStatus, { label: string; color: string; symbol: string }> = {
@@ -18,7 +16,7 @@ const statusStyle: Record<PollStatus, { label: string; color: string; symbol: st
   rate_limited: { label: 'RATE LIMITED — RETRYING', color: '#ffb300', symbol: '↻' },
 };
 
-export function StatusBar({ status, lastPoll, locationMessage }: Props) {
+export function StatusBar({ status }: Props) {
   const visibleStatus = statusStyle[status];
 
   return (
@@ -67,14 +65,6 @@ export function StatusBar({ status, lastPoll, locationMessage }: Props) {
           </Typography>
         </Box>
       </Box>
-
-      <Typography variant="caption" sx={{ color: '#cbd5e1', letterSpacing: 1.1, textTransform: 'uppercase' }}>
-        {lastPoll ? `Last poll: ${new Date(lastPoll).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}` : 'Last poll: waiting'}
-      </Typography>
-
-      <Typography variant="caption" sx={{ color: '#cbd5e1', letterSpacing: 1.1, textTransform: 'uppercase' }}>
-        {locationMessage}
-      </Typography>
 
       <Typography variant="caption" sx={{ color: '#cbd5e1', letterSpacing: 0.6 }}>
         Data:{' '}

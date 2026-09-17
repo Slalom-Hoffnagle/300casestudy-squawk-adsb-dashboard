@@ -7,8 +7,9 @@ import { Alert, Box, Button, CircularProgress, Stack, Typography } from '@mui/ma
 import { AircraftTable } from '@/components/AircraftTable';
 import { StatusBar } from '@/components/StatusBar';
 import { ZipPrompt } from '@/components/ZipPrompt';
+import { getAircraftId } from '@/lib/aircraftDisplay';
 import { geocodeZip } from '@/lib/geocode';
-import type { Aircraft, PollStatus } from '@/types/aircraft';
+import type { Aircraft, AircraftTrackPoint, PollStatus } from '@/types/aircraft';
 
 const AircraftMap = dynamic(() => import('@/components/AircraftMap').then((mod) => mod.AircraftMap), {
   ssr: false,
@@ -17,6 +18,7 @@ const AircraftMap = dynamic(() => import('@/components/AircraftMap').then((mod) 
 
 const DEFAULT_RADIUS_NM = Number(process.env.NEXT_PUBLIC_RADIUS_NM ?? 50);
 const DEFAULT_POLL_INTERVAL_SEC = Number(process.env.NEXT_PUBLIC_POLL_INTERVAL_SEC ?? 10);
+const MAX_TRACK_POINTS = Math.ceil(60 * 60 / DEFAULT_POLL_INTERVAL_SEC);
 
 type Coordinates = {
   lat: number;
@@ -28,9 +30,9 @@ export function LocationGate() {
   const [showZipPrompt, setShowZipPrompt] = useState(false);
   const [status, setStatus] = useState<PollStatus>('idle');
   const [aircraft, setAircraft] = useState<Aircraft[]>([]);
-  const [lastPoll, setLastPoll] = useState<string | null>(null);
   const [locationMessage, setLocationMessage] = useState('Resolving your location...');
   const [selectedAircraftId, setSelectedAircraftId] = useState<string | null>(null);
+  const [trackHistory, setTrackHistory] = useState<Record<string, AircraftTrackPoint[]>>({});
 
   const fetchAircraft = useCallback(async (nextCoordinates: Coordinates) => {
     setStatus('loading');
@@ -43,7 +45,6 @@ export function LocationGate() {
         status?: 'ok' | 'error';
         aircraft?: Aircraft[];
         error?: string;
-        timestamp?: string;
       };
 
       if (!response.ok || payload.status === 'error') {
@@ -53,10 +54,35 @@ export function LocationGate() {
         return;
       }
 
-      setAircraft(Array.isArray(payload.aircraft) ? payload.aircraft : []);
+      const nextAircraft = Array.isArray(payload.aircraft) ? payload.aircraft : [];
+      setAircraft(nextAircraft);
+      setTrackHistory((currentHistory) => {
+        const activeIds = new Set<string>();
+        const nextHistory: Record<string, AircraftTrackPoint[]> = {};
+
+        nextAircraft.forEach((item) => {
+          if (item.lat == null || item.lon == null || (item.seen ?? 0) > 60) return;
+
+          const aircraftId = getAircraftId(item);
+          activeIds.add(aircraftId);
+          const points = currentHistory[aircraftId] ?? [];
+          const point: AircraftTrackPoint = {
+            lat: item.lat,
+            lon: item.lon,
+            altitude: item.alt_baro ?? item.alt_geom ?? null,
+          };
+          const previous = points.at(-1);
+          const unchanged = previous && previous.lat === point.lat && previous.lon === point.lon && previous.altitude === point.altitude;
+          nextHistory[aircraftId] = unchanged ? points : [...points, point].slice(-MAX_TRACK_POINTS);
+        });
+
+        Object.keys(currentHistory).forEach((aircraftId) => {
+          if (!activeIds.has(aircraftId)) delete nextHistory[aircraftId];
+        });
+
+        return nextHistory;
+      });
       setStatus('ok');
-      setLastPoll(payload.timestamp ?? new Date().toISOString());
-      setLocationMessage(`Tracking ${payload.aircraft?.length ?? 0} aircraft within ${DEFAULT_RADIUS_NM} NM.`);
     } catch (error) {
       setStatus('error');
       setAircraft([]);
@@ -110,13 +136,15 @@ export function LocationGate() {
   }, [coordinates, fetchAircraft]);
 
   useEffect(() => {
-    if (selectedAircraftId && !aircraft.some((item) => (item.hex ?? `${item.flight ?? 'unknown'}-${item.lat ?? 'x'}-${item.lon ?? 'x'}`) === selectedAircraftId)) {
+    if (selectedAircraftId && !aircraft.some((item) => getAircraftId(item) === selectedAircraftId)) {
       setSelectedAircraftId(null);
     }
   }, [aircraft, selectedAircraftId]);
 
   const handleZipSubmit = async (zipCode: string) => {
     const matched = await geocodeZip(zipCode);
+    setSelectedAircraftId(null);
+    setTrackHistory({});
     setCoordinates({ lat: matched.lat, lon: matched.lon });
     setShowZipPrompt(false);
     setLocationMessage(`Using ZIP ${zipCode} as your location: ${matched.lat.toFixed(3)}, ${matched.lon.toFixed(3)}`);
@@ -153,7 +181,7 @@ export function LocationGate() {
         </Button>
       </Box>
 
-      <StatusBar status={status} lastPoll={lastPoll} locationMessage={locationMessage} />
+      <StatusBar status={status} />
 
       {status === 'error' || status === 'rate_limited' ? (
         <Alert severity={status === 'rate_limited' ? 'warning' : 'error'} sx={{ m: 2 }}>
@@ -168,6 +196,7 @@ export function LocationGate() {
             userLocation={coordinates}
             radiusNm={DEFAULT_RADIUS_NM}
             selectedAircraftId={selectedAircraftId}
+            selectedTrack={selectedAircraftId ? trackHistory[selectedAircraftId] ?? [] : []}
             onSelectAircraft={setSelectedAircraftId}
           />
         </Box>

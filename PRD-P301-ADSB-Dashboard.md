@@ -148,12 +148,16 @@ The resolved lat/lon is held in React state for the session. It is not persisted
 - User's location marked with a distinct pin/icon
 - Each aircraft rendered as a directional arrow/icon rotated to match its `track` heading
 - Aircraft icons colored by altitude band:
-  - Ground / < 1,000 ft: gray
-  - 1,000–10,000 ft: yellow
-  - 10,000–25,000 ft: green
-  - 25,000–30,000 ft: cyan
-  - 30,000–35,000 ft: blue
-  - ≥ 35,000 ft: violet
+  - Ground / unknown: gray
+  - 0–4,999 ft: amber
+  - 5,000–9,999 ft: yellow
+  - 10,000–14,999 ft: lime
+  - 15,000–19,999 ft: green
+  - 20,000–24,999 ft: teal
+  - 25,000–29,999 ft: cyan
+  - 30,000–34,999 ft: blue
+  - 35,000–39,999 ft: indigo
+  - ≥ 40,000 ft: violet
 - **Hovering** over an aircraft icon opens a detail popup showing: callsign, registration, type, altitude, speed, heading, distance, squawk
 - **Clicking** an aircraft icon selects it and draws its flight track as a dashed line connecting its previously recorded positions (accumulated across poll cycles during the session)
   - Only one track is shown at a time
@@ -171,15 +175,13 @@ The resolved lat/lon is held in React state for the session. It is not persisted
 #### F-03: Aircraft Table
 
 - Tabular list of all currently tracked aircraft (mirrors map visibility rules: only aircraft with `seen` ≤ 60s and present in the latest response)
-- Columns: Callsign, Registration, Type, Altitude (ft), Speed (kts), Heading (°), Distance (NM), Bearing (°), Vertical Rate (fpm), Squawk
+- Columns: Callsign, Type, Speed (kts), Altitude (ft), Registration, Heading (°), Distance (NM), Bearing (°), Vertical Rate (fpm), Squawk
 - Client-side sortable by any column
 - Row count shown: "Showing N aircraft within X NM"
 
 #### F-04: Status Bar
 
-- Last poll timestamp
 - Poll status: OK / Error / Rate-limited
-- Total aircraft count
 - Attribution: "Data: [adsb.fi](https://adsb.fi)" (required by terms)
 
 #### F-05: Auto-Refresh
@@ -235,12 +237,16 @@ Color is never decorative. It is a triage tool. The dashboard uses the aviation-
 
 | Altitude | Icon Color |
 |---|---|
-| Ground / < 1,000 ft | Gray (`#555555`) |
-| 1,000–10,000 ft | Amber (`#FFB300`) |
-| 10,000–25,000 ft | Green (`#39FF14`) |
+| Ground / unknown | Gray (`#777777`) |
+| 0–4,999 ft | Amber (`#FFB300`) |
+| 5,000–9,999 ft | Yellow (`#FFE600`) |
+| 10,000–14,999 ft | Lime (`#A3FF12`) |
+| 15,000–19,999 ft | Green (`#39FF14`) |
+| 20,000–24,999 ft | Teal (`#00E5A8`) |
 | 25,000–29,999 ft | Cyan (`#00FFFF`) |
 | 30,000–34,999 ft | Blue (`#00A6FF`) |
-| 35,000+ ft | Violet (`#8B5CF6`) |
+| 35,000–39,999 ft | Indigo (`#6366F1`) |
+| 40,000+ ft | Violet (`#8B5CF6`) |
 
 ---
 
