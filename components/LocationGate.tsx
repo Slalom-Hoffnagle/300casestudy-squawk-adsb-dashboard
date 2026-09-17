@@ -181,7 +181,7 @@ export function LocationGate() {
     <Box sx={{ height: '100dvh', overflow: 'hidden', background: '#020817', color: '#f8fafc', display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ borderBottom: '1px solid #1f2937', px: 2, py: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
         <Typography component="h1" variant="h6" sx={{ letterSpacing: 1.5, textTransform: 'uppercase', fontWeight: 700 }}>
-          OVERHEAD v1.00
+          Maximum Overhead v1.01
         </Typography>
         <Button
           variant="outlined"
