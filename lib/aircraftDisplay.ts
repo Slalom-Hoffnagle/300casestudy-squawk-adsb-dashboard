@@ -2,11 +2,18 @@ import type { Aircraft } from '@/types/aircraft';
 
 export const AIRCRAFT_STALE_THRESHOLD_SEC = 30;
 
+export type AircraftClass = 'commercial' | 'general' | 'military';
 export type AltitudeVisualState = 'ground' | 'altitude-0' | 'altitude-5' | 'altitude-10' | 'altitude-15' | 'altitude-20' | 'altitude-25' | 'altitude-30' | 'altitude-35' | 'altitude-40' | 'muted';
 export type AircraftVisualState = 'stale' | 'selected' | AltitudeVisualState;
 
 export function getAircraftId(aircraft: Aircraft) {
   return aircraft.hex ?? `${aircraft.flight ?? 'unknown'}-${aircraft.lat ?? 'x'}-${aircraft.lon ?? 'x'}`;
+}
+
+export function getAircraftClass(aircraft: Aircraft): AircraftClass {
+  if ((aircraft.dbFlags ?? 0) & 1) return 'military';
+  if (['A3', 'A4', 'A5'].includes(aircraft.category ?? '')) return 'commercial';
+  return 'general';
 }
 
 export function getAltitudeVisualState(altitude: Aircraft['alt_baro'] | null): AltitudeVisualState {

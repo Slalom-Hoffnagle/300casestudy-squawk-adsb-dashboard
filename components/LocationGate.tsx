@@ -1,13 +1,14 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Box, Button, CircularProgress, Stack, Typography } from '@mui/material';
 
 import { AircraftTable } from '@/components/AircraftTable';
 import { StatusBar } from '@/components/StatusBar';
 import { ZipPrompt } from '@/components/ZipPrompt';
-import { getAircraftId } from '@/lib/aircraftDisplay';
+import { getAircraftClass, getAircraftId } from '@/lib/aircraftDisplay';
+import type { AircraftClass } from '@/lib/aircraftDisplay';
 import { geocodeZip } from '@/lib/geocode';
 import type { Aircraft, AircraftTrackPoint, PollStatus } from '@/types/aircraft';
 
@@ -31,8 +32,14 @@ export function LocationGate() {
   const [status, setStatus] = useState<PollStatus>('idle');
   const [aircraft, setAircraft] = useState<Aircraft[]>([]);
   const [locationMessage, setLocationMessage] = useState('Resolving your location...');
+  const [visibleClasses, setVisibleClasses] = useState<AircraftClass[]>(['commercial', 'general', 'military']);
   const [selectedAircraftId, setSelectedAircraftId] = useState<string | null>(null);
   const [trackHistory, setTrackHistory] = useState<Record<string, AircraftTrackPoint[]>>({});
+
+  const visibleAircraft = useMemo(
+    () => aircraft.filter((item) => visibleClasses.includes(getAircraftClass(item))),
+    [aircraft, visibleClasses]
+  );
 
   const fetchAircraft = useCallback(async (nextCoordinates: Coordinates) => {
     setStatus('loading');
@@ -136,10 +143,10 @@ export function LocationGate() {
   }, [coordinates, fetchAircraft]);
 
   useEffect(() => {
-    if (selectedAircraftId && !aircraft.some((item) => getAircraftId(item) === selectedAircraftId)) {
+    if (selectedAircraftId && !visibleAircraft.some((item) => getAircraftId(item) === selectedAircraftId)) {
       setSelectedAircraftId(null);
     }
-  }, [aircraft, selectedAircraftId]);
+  }, [selectedAircraftId, visibleAircraft]);
 
   const handleZipSubmit = async (zipCode: string) => {
     const matched = await geocodeZip(zipCode);
@@ -192,7 +199,7 @@ export function LocationGate() {
       <Box sx={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden', borderTop: '1px solid #1f2937' }}>
         <Box sx={{ flex: 2, minWidth: 0, minHeight: 0, position: 'relative', zIndex: 0, borderRight: '1px solid #1f2937' }}>
           <AircraftMap
-            aircraft={aircraft}
+            aircraft={visibleAircraft}
             userLocation={coordinates}
             radiusNm={DEFAULT_RADIUS_NM}
             selectedAircraftId={selectedAircraftId}
@@ -202,9 +209,12 @@ export function LocationGate() {
         </Box>
         <Box sx={{ flex: 1, minWidth: 320, display: 'flex', flexDirection: 'column', minHeight: 0, position: 'relative', zIndex: 1, background: '#020617' }}>
           <AircraftTable
-            aircraft={aircraft}
+            aircraft={visibleAircraft}
+            totalAircraftCount={aircraft.length}
             radiusNm={DEFAULT_RADIUS_NM}
             loading={status === 'loading'}
+            visibleClasses={visibleClasses}
+            onVisibleClassesChange={setVisibleClasses}
             selectedAircraftId={selectedAircraftId}
             onSelectAircraft={setSelectedAircraftId}
           />

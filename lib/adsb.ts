@@ -12,6 +12,9 @@ export type Aircraft = {
   baro_rate?: number;
   squawk?: string;
   category?: string;
+  dbFlags?: number;
+  desc?: string;
+  ownOp?: string;
   seen?: number;
   rssi?: number;
   dst?: number;

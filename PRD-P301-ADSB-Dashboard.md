@@ -1,10 +1,5 @@
 # PRD: P301 — ADS-B Dashboard: Overhead
-
-**Status:** Draft  
-**Author:** Carl Hoffnagle  
-**Created:** 2026-09-16  
-**Last Updated:** 2026-09-16 (rev 4 — OQ-2 through OQ-6 resolved)  
-
+ 
 ---
 
 ## 1. Overview
@@ -177,6 +172,10 @@ The resolved lat/lon is held in React state for the session. It is not persisted
 - Tabular list of all currently tracked aircraft (mirrors map visibility rules: only aircraft with `seen` ≤ 60s and present in the latest response)
 - Columns: Callsign, Type, Speed (kts), Altitude (ft), Registration, Heading (°), Distance (NM), Bearing (°), Vertical Rate (fpm), Squawk
 - Client-side sortable by any column
+- Multi-select filters for Commercial, General Aviation, and Military aircraft; all are enabled by default and apply to both table rows and map icons
+  - Military uses the adsb.fi database military flag
+  - Commercial uses ADS-B emitter categories A3–A5 (large, high-vortex, and heavy aircraft)
+  - Aircraft not identified by either rule are grouped under General Aviation
 - Row count shown: "Showing N aircraft within X NM"
 
 #### F-04: Status Bar
@@ -195,14 +194,10 @@ The resolved lat/lon is held in React state for the session. It is not persisted
 
 | ID | Feature | Notes |
 |---|---|---|
-| S-01 | Filter by aircraft category | Airliners only, GA only, military, etc. |
 | S-02 | Highlight / alert on specific callsigns or registrations | Watch list |
-| S-03 | Aircraft trail (last N positions) | Requires Vercel KV position history |
-| S-04 | Export current aircraft list to CSV | One-click download |
-| S-05 | Dark mode | CSS variable toggle |
-| S-06 | Altitude histogram chart | Distribution of overhead traffic by altitude band |
-| S-07 | Password-protect the URL | Vercel middleware + env-var secret |
-| S-08 | De-clutter mode | Single toggle strips view to map + aircraft only; hides table, status bar text, radius ring, graticule (see §5.7) |
+| S-03 | Export current aircraft list to CSV | One-click download |
+| S-04 | Password-protect the URL | Vercel middleware + env-var secret |
+| S-05 | De-clutter mode | Single toggle strips view to map + aircraft only; hides table, status bar text, radius ring, graticule (see §5.7) |
 
 ---
 

@@ -11,11 +11,14 @@ import {
   TableHead,
   TableRow,
   TableSortLabel,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
 } from '@mui/material';
 
 import type { Aircraft } from '@/types/aircraft';
 import { getAircraftId, getAircraftVisualState } from '@/lib/aircraftDisplay';
+import type { AircraftClass } from '@/lib/aircraftDisplay';
 
 type SortDirection = 'asc' | 'desc';
 type SortField = 'flight' | 'r' | 't' | 'altitude' | 'gs' | 'track' | 'dst' | 'dir' | 'baro_rate' | 'squawk';
@@ -27,8 +30,11 @@ type SortState = {
 
 type Props = {
   aircraft: Aircraft[];
+  totalAircraftCount: number;
   radiusNm: number;
   loading: boolean;
+  visibleClasses: AircraftClass[];
+  onVisibleClassesChange: (classes: AircraftClass[]) => void;
   selectedAircraftId: string | null;
   onSelectAircraft: (aircraftId: string | null) => void;
 };
@@ -65,7 +71,7 @@ function getComparableValue(aircraft: Aircraft, key: SortField) {
   }
 }
 
-export function AircraftTable({ aircraft, radiusNm, loading, selectedAircraftId, onSelectAircraft }: Props) {
+export function AircraftTable({ aircraft, totalAircraftCount, radiusNm, loading, visibleClasses, onVisibleClassesChange, selectedAircraftId, onSelectAircraft }: Props) {
   const [sortState, setSortState] = useState<SortState>({ key: 'dst', direction: 'asc' });
 
   const sortedAircraft = useMemo(() => {
@@ -94,9 +100,38 @@ export function AircraftTable({ aircraft, radiusNm, loading, selectedAircraftId,
 
   return (
     <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 2, py: 1.5, borderBottom: '1px solid #1f2937' }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25, px: 2, py: 1.5, borderBottom: '1px solid #1f2937' }}>
+        <ToggleButtonGroup
+          value={visibleClasses}
+          onChange={(_, nextClasses: AircraftClass[]) => onVisibleClassesChange(nextClasses)}
+          aria-label="Aircraft class filters"
+          size="small"
+          fullWidth
+          sx={{
+            '& .MuiToggleButton-root': {
+              minWidth: 0,
+              borderColor: '#334155',
+              color: '#94a3b8',
+              fontFamily: 'var(--font-b612-mono), monospace',
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: 0.7,
+              lineHeight: 1.2,
+              px: 1,
+              py: 0.75,
+              whiteSpace: 'nowrap',
+              '&:hover': { borderColor: '#00d4d4', color: '#f8fafc', background: 'rgba(0, 212, 212, 0.08)' },
+              '&.Mui-selected': { borderColor: '#00d4d4', color: '#00ffff', background: 'rgba(0, 212, 212, 0.14)' },
+              '&.Mui-selected:hover': { background: 'rgba(0, 212, 212, 0.2)' },
+            },
+          }}
+        >
+          <ToggleButton value="commercial">Commercial</ToggleButton>
+          <ToggleButton value="general">General Aviation</ToggleButton>
+          <ToggleButton value="military">Military</ToggleButton>
+        </ToggleButtonGroup>
         <Typography variant="subtitle2" sx={{ color: '#e2e8f0', letterSpacing: 1.2, textTransform: 'uppercase' }}>
-          Showing {aircraft.length} aircraft within {radiusNm} NM
+          Showing {sortedAircraft.length}{sortedAircraft.length !== totalAircraftCount ? ` of ${totalAircraftCount}` : ''} aircraft within {radiusNm} NM
         </Typography>
       </Box>
 
@@ -151,7 +186,7 @@ export function AircraftTable({ aircraft, radiusNm, loading, selectedAircraftId,
             {sortedAircraft.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={10} sx={{ color: '#94a3b8', textAlign: 'center', py: 4, borderColor: '#1f2937' }}>
-                  {loading ? '↻ Acquiring aircraft data...' : 'No aircraft are currently in range.'}
+                  {loading ? '↻ Acquiring aircraft data...' : totalAircraftCount ? 'No aircraft match the selected filters.' : 'No aircraft are currently in range.'}
                 </TableCell>
               </TableRow>
             ) : (
