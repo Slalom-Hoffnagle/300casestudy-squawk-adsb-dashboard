@@ -15,6 +15,7 @@ import {
   ToggleButtonGroup,
   Typography,
 } from '@mui/material';
+import { Plane, Radar } from 'lucide-react';
 
 import type { Aircraft } from '@/types/aircraft';
 import { getAircraftId, getAircraftVisualState } from '@/lib/aircraftDisplay';
@@ -130,9 +131,46 @@ export function AircraftTable({ aircraft, totalAircraftCount, radiusNm, loading,
           <ToggleButton value="general">General Aviation</ToggleButton>
           <ToggleButton value="military">Military</ToggleButton>
         </ToggleButtonGroup>
-        <Typography variant="subtitle2" sx={{ color: '#e2e8f0', letterSpacing: 1.2, textTransform: 'uppercase' }}>
-          Showing {sortedAircraft.length}{sortedAircraft.length !== totalAircraftCount ? ` of ${totalAircraftCount}` : ''} aircraft within {radiusNm} NM
-        </Typography>
+        <Box
+          role="group"
+          aria-label={`${sortedAircraft.length} of ${totalAircraftCount} aircraft within ${radiusNm} nautical miles`}
+          sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', width: '100%', borderTop: '1px solid #1f2937', borderBottom: '1px solid #1f2937' }}
+        >
+          <Box sx={{ minWidth: 0, py: 1, pr: 2, borderRight: '1px solid #1f2937', display: 'flex', alignItems: 'center', gap: 1.25 }}>
+            <Box aria-hidden="true" sx={{ width: 28, height: 28, display: 'grid', placeItems: 'center', flexShrink: 0, color: '#00d4d4' }}>
+              <Plane size={24} strokeWidth={1.75} />
+            </Box>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="caption" sx={{ display: 'block', color: '#94a3b8', letterSpacing: 1.2, textTransform: 'uppercase' }}>
+                Aircraft
+              </Typography>
+              <Typography component="div" sx={{ color: '#00ffff', fontFamily: 'var(--font-b612-mono), monospace', fontSize: 24, fontWeight: 700, lineHeight: 1.15 }}>
+                {sortedAircraft.length}
+                {sortedAircraft.length !== totalAircraftCount ? (
+                  <Box component="span" sx={{ ml: 0.75, color: '#94a3b8', fontSize: 12, fontWeight: 400 }}>
+                    of {totalAircraftCount}
+                  </Box>
+                ) : null}
+              </Typography>
+            </Box>
+          </Box>
+          <Box sx={{ minWidth: 0, py: 1, pl: 2, display: 'flex', alignItems: 'center', gap: 1.25 }}>
+            <Box aria-hidden="true" sx={{ width: 28, height: 28, display: 'grid', placeItems: 'center', flexShrink: 0, color: '#00d4d4' }}>
+              <Radar size={24} strokeWidth={1.75} />
+            </Box>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="caption" sx={{ display: 'block', color: '#94a3b8', letterSpacing: 1.2, textTransform: 'uppercase' }}>
+                Radius
+              </Typography>
+              <Typography component="div" sx={{ color: '#00ffff', fontFamily: 'var(--font-b612-mono), monospace', fontSize: 24, fontWeight: 700, lineHeight: 1.15 }}>
+                {radiusNm}
+                <Box component="span" sx={{ ml: 0.75, color: '#94a3b8', fontSize: 12, fontWeight: 400, textTransform: 'uppercase' }}>
+                  NM
+                </Box>
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
       </Box>
 
       <TableContainer component={Paper} sx={{ flex: 1, minHeight: 0, background: '#020817', boxShadow: 'none', borderRadius: 0, overflow: 'auto' }}>

@@ -176,7 +176,7 @@ The resolved lat/lon is held in React state for the session. It is not persisted
   - Military uses the adsb.fi database military flag
   - Commercial uses ADS-B emitter categories A3–A5 (large, high-vortex, and heavy aircraft)
   - Aircraft not identified by either rule are grouped under General Aviation
-- Row count shown: "Showing N aircraft within X NM"
+- Two equal-width table-panel metrics highlight the visible aircraft count and search radius side by side, paired with aircraft and radar icons; filtered count retains the total aircraft context
 
 #### F-04: Status Bar
 
