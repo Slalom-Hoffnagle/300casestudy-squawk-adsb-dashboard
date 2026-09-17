@@ -162,10 +162,10 @@ export function LocationGate() {
       ) : null}
 
       <Box sx={{ display: 'flex', flex: 1, minHeight: 0, borderTop: '1px solid #1f2937' }}>
-        <Box sx={{ flex: 2, minWidth: 0, borderRight: '1px solid #1f2937' }}>
+        <Box sx={{ flex: 2, minWidth: 0, position: 'relative', zIndex: 0, borderRight: '1px solid #1f2937' }}>
           <AircraftMap aircraft={aircraft} userLocation={coordinates} radiusNm={DEFAULT_RADIUS_NM} />
         </Box>
-        <Box sx={{ flex: 1, minWidth: 320, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        <Box sx={{ flex: 1, minWidth: 320, display: 'flex', flexDirection: 'column', minHeight: 0, position: 'relative', zIndex: 1, background: '#020617' }}>
           <AircraftTable aircraft={aircraft} radiusNm={DEFAULT_RADIUS_NM} />
         </Box>
       </Box>

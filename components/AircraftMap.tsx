@@ -38,6 +38,15 @@ function MapViewport({ center, zoom }: { center: [number, number]; zoom: number 
 
   useEffect(() => {
     map.setView(center, zoom);
+    const invalidateSize = () => map.invalidateSize({ pan: false });
+    const frame = requestAnimationFrame(invalidateSize);
+    const resizeObserver = new ResizeObserver(invalidateSize);
+    resizeObserver.observe(map.getContainer());
+
+    return () => {
+      cancelAnimationFrame(frame);
+      resizeObserver.disconnect();
+    };
   }, [center, zoom, map]);
 
   return null;
@@ -62,7 +71,7 @@ export function AircraftMap({
   const mapHeight = 520;
 
   return (
-    <div style={{ height: mapHeight, width: '100%', background: '#020817' }}>
+    <div style={{ height: mapHeight, width: '100%', background: '#020817', position: 'relative', zIndex: 0, overflow: 'hidden' }}>
       <MapContainer center={center} zoom={8} style={{ height: '100%', width: '100%' }} scrollWheelZoom>
         <MapViewport center={center} zoom={8} />
         <TileLayer
