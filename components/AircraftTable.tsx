@@ -3,7 +3,9 @@
 import { useMemo, useState } from 'react';
 import {
   Box,
+  MenuItem,
   Paper,
+  Select,
   Table,
   TableBody,
   TableCell,
@@ -13,6 +15,7 @@ import {
   TableSortLabel,
   ToggleButton,
   ToggleButtonGroup,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import { Plane, Radar } from 'lucide-react';
@@ -33,6 +36,7 @@ type Props = {
   aircraft: Aircraft[];
   totalAircraftCount: number;
   radiusNm: number;
+  onRadiusChange: (radiusNm: number) => void;
   loading: boolean;
   visibleClasses: AircraftClass[];
   onVisibleClassesChange: (classes: AircraftClass[]) => void;
@@ -72,7 +76,7 @@ function getComparableValue(aircraft: Aircraft, key: SortField) {
   }
 }
 
-export function AircraftTable({ aircraft, totalAircraftCount, radiusNm, loading, visibleClasses, onVisibleClassesChange, selectedAircraftId, onSelectAircraft }: Props) {
+export function AircraftTable({ aircraft, totalAircraftCount, radiusNm, onRadiusChange, loading, visibleClasses, onVisibleClassesChange, selectedAircraftId, onSelectAircraft }: Props) {
   const [sortState, setSortState] = useState<SortState>({ key: 'dst', direction: 'asc' });
 
   const sortedAircraft = useMemo(() => {
@@ -162,12 +166,34 @@ export function AircraftTable({ aircraft, totalAircraftCount, radiusNm, loading,
               <Typography variant="caption" sx={{ display: 'block', color: '#94a3b8', letterSpacing: 1.2, textTransform: 'uppercase' }}>
                 Radius
               </Typography>
-              <Typography component="div" sx={{ color: '#00ffff', fontFamily: 'var(--font-b612-mono), monospace', fontSize: 24, fontWeight: 700, lineHeight: 1.15 }}>
-                {radiusNm}
-                <Box component="span" sx={{ ml: 0.75, color: '#94a3b8', fontSize: 12, fontWeight: 400, textTransform: 'uppercase' }}>
+              <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.75 }}>
+                <Select
+                  value={radiusNm}
+                  onChange={(event) => onRadiusChange(Number(event.target.value))}
+                  variant="standard"
+                  inputProps={{ 'aria-label': 'Search radius in nautical miles' }}
+                  sx={{
+                    width: 76,
+                    color: '#00ffff',
+                    fontFamily: 'var(--font-b612-mono), monospace',
+                    fontSize: 24,
+                    fontWeight: 700,
+                    lineHeight: 1.15,
+                    '&::before': { borderBottomColor: '#334155' },
+                    '&:hover:not(.Mui-disabled)::before': { borderBottomColor: '#00d4d4' },
+                    '&::after': { borderBottomColor: '#00ffff' },
+                    '& .MuiSelect-select': { py: 0, minHeight: '28px !important' },
+                    '& .MuiSelect-icon': { color: '#00d4d4' },
+                  }}
+                >
+                  {[5, 10, 50, 100, 150, 250].map((value) => (
+                    <MenuItem key={value} value={value}>{value}</MenuItem>
+                  ))}
+                </Select>
+                <Typography component="span" sx={{ color: '#94a3b8', fontFamily: 'var(--font-b612-mono), monospace', fontSize: 12, textTransform: 'uppercase' }}>
                   NM
-                </Box>
-              </Typography>
+                </Typography>
+              </Box>
             </Box>
           </Box>
         </Box>
@@ -180,11 +206,11 @@ export function AircraftTable({ aircraft, totalAircraftCount, radiusNm, loading,
               {[
                 { key: 'flight', label: 'Callsign' },
                 { key: 't', label: 'Type' },
-                { key: 'gs', label: 'Speed (kts)' },
+                { key: 'dst', label: 'Distance (NM)' },
                 { key: 'altitude', label: 'Altitude (ft)' },
+                { key: 'gs', label: 'Speed (kts)' },
                 { key: 'r', label: 'Registration' },
                 { key: 'track', label: 'Heading (°)' },
-                { key: 'dst', label: 'Distance (NM)' },
                 { key: 'dir', label: 'Bearing (°)' },
                 { key: 'baro_rate', label: 'Vertical Rate (fpm)' },
                 { key: 'squawk', label: 'Squawk' },
@@ -256,12 +282,41 @@ export function AircraftTable({ aircraft, totalAircraftCount, radiusNm, loading,
                   <TableCell sx={{ color: visualState === 'stale' ? '#ffb300' : '#f8fafc', borderColor: '#1f2937', borderLeft: visualState === 'selected' ? '3px solid #ff00ff' : visualState === 'stale' ? '3px dashed #ffb300' : '3px solid transparent' }}>
                     {visualState === 'stale' ? '⚠ ' : visualState === 'selected' ? '◆ ' : ''}{aircraft.flight || '—'}
                   </TableCell>
-                  <TableCell sx={{ color: '#f8fafc', borderColor: '#1f2937' }}>{aircraft.t || '—'}</TableCell>
-                  <TableCell sx={{ color: '#f8fafc', borderColor: '#1f2937' }}>{aircraft.gs !== undefined ? aircraft.gs.toFixed(0) : '—'}</TableCell>
+                  <TableCell sx={{ color: '#f8fafc', borderColor: '#1f2937' }}>
+                    {aircraft.t ? (
+                      <Tooltip
+                        title={aircraft.desc || 'Type description unavailable'}
+                        placement="left"
+                        enterDelay={250}
+                        componentsProps={{
+                          tooltip: {
+                            sx: {
+                              maxWidth: 260,
+                              px: 1.5,
+                              py: 1,
+                              border: '1px solid #00d4d4',
+                              borderRadius: 0,
+                              background: '#050816',
+                              boxShadow: 'none',
+                              color: '#e0e0e0',
+                              fontFamily: 'var(--font-b612-mono), monospace',
+                              fontSize: 12,
+                              lineHeight: 1.4,
+                            },
+                          },
+                        }}
+                      >
+                        <Box component="span" tabIndex={0} sx={{ display: 'inline-block', color: '#00d4d4', cursor: 'pointer', borderBottom: '1px dotted #00d4d4' }}>
+                          {aircraft.t}
+                        </Box>
+                      </Tooltip>
+                    ) : '—'}
+                  </TableCell>
+                  <TableCell sx={{ color: '#f8fafc', borderColor: '#1f2937' }}>{aircraft.dst !== undefined ? aircraft.dst.toFixed(1) : '—'}</TableCell>
                   <TableCell sx={{ color: '#f8fafc', borderColor: '#1f2937' }}>{getAltitudeValue(aircraft) ? getAltitudeValue(aircraft).toLocaleString() : '—'}</TableCell>
+                  <TableCell sx={{ color: '#f8fafc', borderColor: '#1f2937' }}>{aircraft.gs !== undefined ? aircraft.gs.toFixed(0) : '—'}</TableCell>
                   <TableCell sx={{ color: '#f8fafc', borderColor: '#1f2937' }}>{aircraft.r || '—'}</TableCell>
                   <TableCell sx={{ color: '#f8fafc', borderColor: '#1f2937' }}>{aircraft.track !== undefined ? aircraft.track.toFixed(0) : '—'}</TableCell>
-                  <TableCell sx={{ color: '#f8fafc', borderColor: '#1f2937' }}>{aircraft.dst !== undefined ? aircraft.dst.toFixed(1) : '—'}</TableCell>
                   <TableCell sx={{ color: '#f8fafc', borderColor: '#1f2937' }}>{aircraft.dir !== undefined ? aircraft.dir.toFixed(0) : '—'}</TableCell>
                   <TableCell sx={{ color: '#f8fafc', borderColor: '#1f2937' }}>{aircraft.baro_rate !== undefined ? aircraft.baro_rate.toLocaleString() : '—'}</TableCell>
                   <TableCell sx={{ color: '#f8fafc', borderColor: '#1f2937' }}>{aircraft.squawk || '—'}</TableCell>

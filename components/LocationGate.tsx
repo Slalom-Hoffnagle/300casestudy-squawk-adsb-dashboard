@@ -17,7 +17,8 @@ const AircraftMap = dynamic(() => import('@/components/AircraftMap').then((mod) 
   loading: () => <Box sx={{ height: '100%', display: 'grid', placeItems: 'center', background: '#020817' }}>Loading map…</Box>,
 });
 
-const DEFAULT_RADIUS_NM = Number(process.env.NEXT_PUBLIC_RADIUS_NM ?? 50);
+const DEFAULT_RADIUS_NM = 50;
+const RADIUS_OPTIONS_NM = [5, 10, 50, 100, 150, 250];
 const DEFAULT_POLL_INTERVAL_SEC = Number(process.env.NEXT_PUBLIC_POLL_INTERVAL_SEC ?? 10);
 const MAX_TRACK_POINTS = Math.ceil(60 * 60 / DEFAULT_POLL_INTERVAL_SEC);
 
@@ -31,6 +32,10 @@ export function LocationGate() {
   const [showZipPrompt, setShowZipPrompt] = useState(false);
   const [status, setStatus] = useState<PollStatus>('idle');
   const [aircraft, setAircraft] = useState<Aircraft[]>([]);
+  const [radiusNm, setRadiusNm] = useState(() => {
+    const configuredRadius = Number(process.env.NEXT_PUBLIC_RADIUS_NM ?? DEFAULT_RADIUS_NM);
+    return RADIUS_OPTIONS_NM.includes(configuredRadius) ? configuredRadius : DEFAULT_RADIUS_NM;
+  });
   const [locationMessage, setLocationMessage] = useState('Resolving your location...');
   const [visibleClasses, setVisibleClasses] = useState<AircraftClass[]>(['commercial', 'general', 'military']);
   const [selectedAircraftId, setSelectedAircraftId] = useState<string | null>(null);
@@ -44,7 +49,7 @@ export function LocationGate() {
   const fetchAircraft = useCallback(async (nextCoordinates: Coordinates) => {
     setStatus('loading');
 
-    const url = `/api/aircraft?lat=${nextCoordinates.lat}&lon=${nextCoordinates.lon}&dist=${DEFAULT_RADIUS_NM}`;
+    const url = `/api/aircraft?lat=${nextCoordinates.lat}&lon=${nextCoordinates.lon}&dist=${radiusNm}`;
 
     try {
       const response = await fetch(url, { cache: 'no-store' });
@@ -95,7 +100,7 @@ export function LocationGate() {
       setAircraft([]);
       setLocationMessage('Unable to reach the aircraft feed.');
     }
-  }, []);
+  }, [radiusNm]);
 
   useEffect(() => {
     const startLocationLookup = () => {
@@ -201,7 +206,7 @@ export function LocationGate() {
           <AircraftMap
             aircraft={visibleAircraft}
             userLocation={coordinates}
-            radiusNm={DEFAULT_RADIUS_NM}
+            radiusNm={radiusNm}
             selectedAircraftId={selectedAircraftId}
             selectedTrack={selectedAircraftId ? trackHistory[selectedAircraftId] ?? [] : []}
             onSelectAircraft={setSelectedAircraftId}
@@ -211,7 +216,8 @@ export function LocationGate() {
           <AircraftTable
             aircraft={visibleAircraft}
             totalAircraftCount={aircraft.length}
-            radiusNm={DEFAULT_RADIUS_NM}
+            radiusNm={radiusNm}
+            onRadiusChange={setRadiusNm}
             loading={status === 'loading'}
             visibleClasses={visibleClasses}
             onVisibleClassesChange={setVisibleClasses}

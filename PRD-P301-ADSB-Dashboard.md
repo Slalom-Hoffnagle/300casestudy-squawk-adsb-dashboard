@@ -37,7 +37,7 @@ Build a real-time overhead aircraft dashboard hosted on Vercel, that proxies the
 |---|---|
 | Any viewer | Anyone with the URL; the dashboard resolves their location automatically and shows overhead traffic for their position |
 
-**Deployment context:** Vercel (serverless). Public URL. No login required. Each viewer's location is resolved client-side via the browser Geolocation API (or ZIP code entry). The search radius and poll interval are configured at deploy time via environment variables and are the same for all viewers.
+**Deployment context:** Vercel (serverless). Public URL. No login required. Each viewer's location is resolved client-side via the browser Geolocation API (or ZIP code entry). The search radius defaults to 50 NM and can be changed by each viewer; the poll interval is configured at deploy time.
 
 ---
 
@@ -132,8 +132,8 @@ The resolved lat/lon is held in React state for the session. It is not persisted
 
 #### F-01b: App-Level Configuration (Server)
 
-- Search radius and poll interval are server-configured via **Vercel environment variables**:
-  - `RADIUS_NM` — default `50`, max `250`
+- Search radius defaults to `50` NM and can be selected in the UI from `5`, `10`, `50`, `100`, `150`, or `250` NM
+- Poll interval is server-configured via **Vercel environment variables**:
   - `POLL_INTERVAL_SEC` — default `10`, min `5`
 - These values are the same for all viewers; exposed to the frontend as build-time constants
 
@@ -170,13 +170,15 @@ The resolved lat/lon is held in React state for the session. It is not persisted
 #### F-03: Aircraft Table
 
 - Tabular list of all currently tracked aircraft (mirrors map visibility rules: only aircraft with `seen` ≤ 60s and present in the latest response)
-- Columns: Callsign, Type, Speed (kts), Altitude (ft), Registration, Heading (°), Distance (NM), Bearing (°), Vertical Rate (fpm), Squawk
+- Columns: Callsign, Type, Distance (NM), Altitude (ft), Speed (kts), Registration, Heading (°), Bearing (°), Vertical Rate (fpm), Squawk
+- Hovering or focusing a Type value reveals its full aircraft type description in a map-popup-styled tooltip
 - Client-side sortable by any column
 - Multi-select filters for Commercial, General Aviation, and Military aircraft; all are enabled by default and apply to both table rows and map icons
   - Military uses the adsb.fi database military flag
   - Commercial uses ADS-B emitter categories A3–A5 (large, high-vortex, and heavy aircraft)
   - Aircraft not identified by either rule are grouped under General Aviation
-- Two equal-width table-panel metrics highlight the visible aircraft count and search radius side by side, paired with aircraft and radar icons; filtered count retains the total aircraft context
+- Two equal-width table-panel metrics highlight the visible aircraft count and selectable search radius side by side, paired with aircraft and radar icons; filtered count retains the total aircraft context
+- The radius metric provides 5, 10, 50, 100, 150, and 250 NM options and defaults to 50 NM; selecting a value refreshes the feed and updates the map radius and viewport
 
 #### F-04: Status Bar
 
