@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Box, Button, CircularProgress, Stack, Typography } from '@mui/material';
 
@@ -8,6 +9,11 @@ import { StatusBar } from '@/components/StatusBar';
 import { ZipPrompt } from '@/components/ZipPrompt';
 import { geocodeZip } from '@/lib/geocode';
 import type { Aircraft, PollStatus } from '@/types/aircraft';
+
+const AircraftMap = dynamic(() => import('@/components/AircraftMap').then((mod) => mod.AircraftMap), {
+  ssr: false,
+  loading: () => <Box sx={{ height: 520, display: 'grid', placeItems: 'center', background: '#020817' }}>Loading map…</Box>,
+});
 
 const DEFAULT_RADIUS_NM = Number(process.env.NEXT_PUBLIC_RADIUS_NM ?? 50);
 const DEFAULT_POLL_INTERVAL_SEC = Number(process.env.NEXT_PUBLIC_POLL_INTERVAL_SEC ?? 10);
@@ -155,8 +161,13 @@ export function LocationGate() {
         </Alert>
       ) : null}
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-        <AircraftTable aircraft={aircraft} radiusNm={DEFAULT_RADIUS_NM} />
+      <Box sx={{ display: 'flex', flex: 1, minHeight: 0, borderTop: '1px solid #1f2937' }}>
+        <Box sx={{ flex: 2, minWidth: 0, borderRight: '1px solid #1f2937' }}>
+          <AircraftMap aircraft={aircraft} userLocation={coordinates} radiusNm={DEFAULT_RADIUS_NM} />
+        </Box>
+        <Box sx={{ flex: 1, minWidth: 320, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          <AircraftTable aircraft={aircraft} radiusNm={DEFAULT_RADIUS_NM} />
+        </Box>
       </Box>
 
       <StatusBar status={status} lastPoll={lastPoll} aircraftCount={aircraft.length} cacheAgeSec={cacheAgeSec} />
