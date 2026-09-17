@@ -35,16 +35,20 @@ export function StatusBar({ status, lastPoll, locationMessage }: Props) {
         flexWrap: 'wrap',
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, minWidth: 0 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flexShrink: 0 }}>
         <Box
           className={status === 'loading' ? 'status-refreshing' : undefined}
           aria-hidden="true"
           sx={{
-            width: status === 'ok' ? 10 : 18,
-            height: status === 'ok' ? 10 : 'auto',
+            width: 18,
+            height: 18,
+            display: 'grid',
+            placeItems: 'center',
+            flexShrink: 0,
             borderRadius: status === 'ok' ? '50%' : 0,
             background: status === 'ok' ? visibleStatus.color : 'transparent',
             boxShadow: status === 'ok' ? `0 0 4px ${visibleStatus.color}, 0 0 12px ${visibleStatus.color}` : 'none',
+            transform: status === 'ok' ? 'scale(0.56)' : 'none',
             color: visibleStatus.color,
             fontFamily: 'var(--font-b612-mono), monospace',
             fontWeight: 700,
@@ -54,9 +58,14 @@ export function StatusBar({ status, lastPoll, locationMessage }: Props) {
         >
           {visibleStatus.symbol}
         </Box>
-        <Typography variant="caption" sx={{ color: '#e2e8f0', letterSpacing: 1.5, fontWeight: 700, textTransform: 'uppercase' }}>
-          {visibleStatus.label}
-        </Typography>
+        <Box sx={{ display: 'grid' }}>
+          <Typography aria-hidden="true" variant="caption" sx={{ gridArea: '1 / 1', visibility: 'hidden', letterSpacing: 1.5, fontWeight: 700, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+            RATE LIMITED — RETRYING
+          </Typography>
+          <Typography variant="caption" sx={{ gridArea: '1 / 1', color: '#e2e8f0', letterSpacing: 1.5, fontWeight: 700, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+            {visibleStatus.label}
+          </Typography>
+        </Box>
       </Box>
 
       <Typography variant="caption" sx={{ color: '#cbd5e1', letterSpacing: 1.1, textTransform: 'uppercase' }}>

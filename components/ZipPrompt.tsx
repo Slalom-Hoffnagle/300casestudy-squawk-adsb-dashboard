@@ -6,10 +6,9 @@ import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack
 type Props = {
   open: boolean;
   onSubmit: (zipCode: string) => Promise<void> | void;
-  onClose?: () => void;
 };
 
-export function ZipPrompt({ open, onSubmit, onClose }: Props) {
+export function ZipPrompt({ open, onSubmit }: Props) {
   const [value, setValue] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -34,7 +33,7 @@ export function ZipPrompt({ open, onSubmit, onClose }: Props) {
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
+    <Dialog open={open} disableEscapeKeyDown fullWidth maxWidth="xs">
       <DialogTitle sx={{ background: '#020817', color: '#f8fafc', borderBottom: '1px solid #1f2937' }}>
         Enter your ZIP code
       </DialogTitle>
@@ -66,11 +65,6 @@ export function ZipPrompt({ open, onSubmit, onClose }: Props) {
         </Stack>
       </DialogContent>
       <DialogActions sx={{ background: '#020817', borderTop: '1px solid #1f2937', px: 3, pb: 2 }}>
-        {onClose ? (
-          <Button onClick={onClose} sx={{ color: '#cbd5e1' }}>
-            Cancel
-          </Button>
-        ) : null}
         <Button variant="contained" onClick={handleSubmit} disabled={busy} sx={{ background: '#00d4d4', color: '#020817', fontWeight: 700 }}>
           {busy ? 'Resolving...' : 'Use ZIP code'}
         </Button>

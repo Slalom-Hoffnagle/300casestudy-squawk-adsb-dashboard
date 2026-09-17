@@ -62,14 +62,20 @@ function MapSelection({ onClearSelection }: { onClearSelection: () => void }) {
   return null;
 }
 
-function MapControls({ center }: { center: [number, number] }) {
+function fitMapToRadius(map: L.Map, center: [number, number], radiusNm: number) {
+  map.invalidateSize({ pan: false });
+  const radiusBounds = L.latLng(center).toBounds(radiusNm * 1852 * 2);
+  map.fitBounds(radiusBounds, { padding: [32, 32], animate: false });
+}
+
+function MapControls({ center, radiusNm }: { center: [number, number]; radiusNm: number }) {
   const map = useMap();
 
   return (
     <div className="map-controls leaflet-bar" onClick={(event) => event.stopPropagation()}>
       <button type="button" title="Zoom in" aria-label="Zoom in" onClick={() => map.zoomIn()}>+</button>
       <button type="button" title="Zoom out" aria-label="Zoom out" onClick={() => map.zoomOut()}>−</button>
-      <button type="button" title="Recenter map" aria-label="Recenter map on your location" onClick={() => map.setView(center, map.getZoom())}>⌖</button>
+      <button type="button" title="Reset map view" aria-label="Recenter and reset map zoom" onClick={() => fitMapToRadius(map, center, radiusNm)}>⌖</button>
     </div>
   );
 }
@@ -79,12 +85,7 @@ function MapViewport({ center, radiusNm }: { center: [number, number]; radiusNm:
 
   useEffect(() => {
     const invalidateSize = () => map.invalidateSize({ pan: false });
-    const fitRadius = () => {
-      invalidateSize();
-      const radiusBounds = L.latLng(center).toBounds(radiusNm * 1852 * 2);
-      map.fitBounds(radiusBounds, { padding: [32, 32], animate: false });
-    };
-    const frame = requestAnimationFrame(fitRadius);
+    const frame = requestAnimationFrame(() => fitMapToRadius(map, center, radiusNm));
     const resizeObserver = new ResizeObserver(invalidateSize);
     resizeObserver.observe(map.getContainer());
 
@@ -122,7 +123,7 @@ export function AircraftMap({
       <MapContainer center={center} zoom={8} zoomControl={false} style={{ height: '100%', width: '100%' }} scrollWheelZoom>
         <MapViewport center={center} radiusNm={radiusNm} />
         <MapSelection onClearSelection={() => onSelectAircraft(null)} />
-        <MapControls center={center} />
+        <MapControls center={center} radiusNm={radiusNm} />
         <TileLayer
           attribution='&copy; <a href="https://carto.com/attributions">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png?key=cb1_3o52_1_33333ae77fb1d0f08863d0d7"

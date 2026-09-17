@@ -132,16 +132,16 @@ export function LocationGate() {
           </Typography>
           <Typography color="text.secondary">{locationMessage}</Typography>
         </Stack>
-        <ZipPrompt open={showZipPrompt} onSubmit={handleZipSubmit} onClose={() => setShowZipPrompt(false)} />
+        <ZipPrompt open={showZipPrompt} onSubmit={handleZipSubmit} />
       </Box>
     );
   }
 
   return (
     <Box sx={{ height: '100dvh', overflow: 'hidden', background: '#020817', color: '#f8fafc', display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ borderBottom: '1px solid #1f2937', px: 2, py: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-        <Typography variant="h6" sx={{ letterSpacing: 1.5, textTransform: 'uppercase', fontWeight: 700 }}>
-          ADS-B Overhead Dashboard
+      <Box sx={{ borderBottom: '1px solid #1f2937', px: 2, py: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+        <Typography component="h1" variant="h6" sx={{ letterSpacing: 1.5, textTransform: 'uppercase', fontWeight: 700 }}>
+          OVERHEAD v1.00
         </Typography>
         <Button
           variant="outlined"
@@ -182,7 +182,7 @@ export function LocationGate() {
         </Box>
       </Box>
 
-      <ZipPrompt open={showZipPrompt} onSubmit={handleZipSubmit} onClose={() => setShowZipPrompt(false)} />
+      <ZipPrompt open={showZipPrompt} onSubmit={handleZipSubmit} />
     </Box>
   );
 }
