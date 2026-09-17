@@ -16,6 +16,14 @@ export type Aircraft = {
   rssi?: number;
   dst?: number;
   dir?: number;
+  type?: string;
+};
+
+export type AdsbApiResponse = {
+  ac?: Aircraft[];
+  total?: number;
+  msg?: string;
+  [key: string]: unknown;
 };
 
 export type AircraftResponse = {

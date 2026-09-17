@@ -1,4 +1,4 @@
-import { buildAdsbUrl, type AircraftResponse } from '@/lib/adsb';
+import { buildAdsbUrl, type AdsbApiResponse, type AircraftResponse } from '@/lib/adsb';
 
 export const dynamic = 'force-dynamic';
 
@@ -59,8 +59,8 @@ export async function GET(request: Request) {
       );
     }
 
-    const data = (await res.json()) as { aircraft?: unknown[]; [key: string]: unknown };
-    const aircraft = Array.isArray(data.aircraft) ? data.aircraft : [];
+    const data = (await res.json()) as AdsbApiResponse;
+    const aircraft = Array.isArray(data.ac) ? data.ac : [];
     const response: AircraftResponse = {
       timestamp: new Date().toISOString(),
       cache_age_sec: getPollInterval(),
@@ -70,7 +70,7 @@ export async function GET(request: Request) {
         lon: Number(lonParam),
         radius_nm: radius,
       },
-      aircraft_count: aircraft.length,
+      aircraft_count: Array.isArray(data.ac) ? data.ac.length : 0,
       aircraft: aircraft as AircraftResponse['aircraft'],
     };
 
